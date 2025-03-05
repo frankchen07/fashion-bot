@@ -69,37 +69,22 @@ export default function App() {
 
   // Analyze the fashion in the image
   const analyzeOutfit = async () => {
-    if (!image) return;
-    
-    setLoading(true);
-    
+    if (!image) return
+
+    setLoading(true)
+
     try {
-      const formData = new FormData();
-      formData.append('image', {
-        uri: image,
-        type: 'image/jpeg',
-        name: 'outfit.jpg',
-      });
-  
-      const response = await fetch('https://your-fashion-bot-backend.vercel.app/analyze', {  // MAKE SURE TO REPLACE THIS
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to analyze outfit');
-      }
-  
-      const analysisResult = await response.json();
-      setAnalysis(analysisResult);
+      const base64Image = await FileSystem.readAsStringAsync(image, {
+        encoding: FileSystem.EncodingType.Base64,
+      })
+
+      const analysisResult = await analyzeFashionWithAI(base64Image)
+      setAnalysis(analysisResult)
     } catch (error) {
-      console.error('Error analyzing outfit:', error);
-      alert('Failed to analyze outfit. Please try again.');
+      console.error("Error analyzing outfit:", error)
+      alert("Failed to analyze outfit. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
