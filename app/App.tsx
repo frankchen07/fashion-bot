@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import {
   StyleSheet,
   View,
@@ -12,16 +12,24 @@ import {
   ScrollView,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
-import { Camera } from "expo-camera"
+import { Camera, CameraType } from "expo-camera"
 import * as FileSystem from "expo-file-system"
-import { useAIAnalysis } from "./hooks/useAIAnalysis"
+import { useAIAnalysis } from "../hooks/useAIAnalysis"
+
+interface Analysis {
+  description: string
+  style: string
+  suggestions: string[]
+  shopping: string[]
+  examples: string[]
+}
 
 export default function App() {
-  const [image, setImage] = useState(null)
+  const [image, setImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [analysis, setAnalysis] = useState(null)
+  const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [cameraVisible, setCameraVisible] = useState(false)
-  const [cameraRef, setCameraRef] = useState(null)
+  const cameraRef = useRef<Camera | null>(null)
   const { analyzeFashionWithAI } = useAIAnalysis()
 
   // Request camera and photo library permissions
@@ -44,8 +52,8 @@ export default function App() {
 
   // Capture photo from camera
   const handleCameraCapture = async () => {
-    if (cameraRef) {
-      const photo = await cameraRef.takePictureAsync()
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync()
       setCameraVisible(false)
       setImage(photo.uri)
     }
@@ -62,7 +70,7 @@ export default function App() {
       quality: 1,
     })
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri)
     }
   }
@@ -98,7 +106,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       {cameraVisible ? (
         <View style={styles.cameraContainer}>
-          <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={(ref) => setCameraRef(ref)}>
+          <Camera style={styles.camera} type={CameraType.back} ref={cameraRef}>
             <View style={styles.cameraControls}>
               <TouchableOpacity style={styles.cameraButton} onPress={handleCameraCapture}>
                 <Text style={styles.cameraButtonText}>Take Photo</Text>
@@ -187,99 +195,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 20,
-  },
-  inputContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  button: {
-    backgroundColor: "#2c3e50",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    marginVertical: 10,
-    width: "80%",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  previewContainer: {
-    flex: 1,
-    alignItems: "center",
-    padding: 20,
-  },
-  previewImage: {
-    width: 300,
-    height: 400,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  actionButtons: {
-    width: "100%",
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#c0392b",
-  },
-  resetButton: {
-    marginVertical: 20,
-  },
-  loader: {
-    marginVertical: 20,
-  },
-  resultsContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  resultImage: {
-    width: "100%",
-    height: 300,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  descriptionText: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  styleText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  suggestionText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  examplesContainer: {
-    flexDirection: "row",
-    marginVertical: 10,
-  },
-  exampleImage: {
-    width: 150,
-    height: 200,
-    marginRight: 10,
-    borderRadius: 5,
-  },
-  shoppingText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
   cameraContainer: {
     flex: 1,
   },
@@ -292,9 +207,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     margin: 20,
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
   },
   cameraButton: {
     backgroundColor: "#2c3e50",
@@ -308,6 +220,92 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  inputContainer: {
+    alignItems: "center",
+  },
+  button: {
+    backgroundColor: "#3498db",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  previewContainer: {
+    alignItems: "center",
+  },
+  previewImage: {
+    width: 200,
+    height: 300,
+    resizeMode: "cover",
+    marginBottom: 20,
+  },
+  loader: {
+    marginBottom: 20,
+  },
+  actionButtons: {
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#e74c3c",
+  },
+  resultsContainer: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  descriptionText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  styleText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  suggestionText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  examplesContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  exampleImage: {
+    width: 120,
+    height: 180,
+    resizeMode: "cover",
+    marginRight: 10,
+  },
+  shoppingText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  resetButton: {
+    backgroundColor: "#27ae60",
+    marginTop: 20,
+  },
+  resultImage: {
+    width: 200,
+    height: 300,
+    resizeMode: "cover",
+    marginBottom: 20,
+    alignSelf: "center",
   },
 })
 
