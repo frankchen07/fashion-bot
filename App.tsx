@@ -14,7 +14,7 @@ import {
 import * as ImagePicker from "expo-image-picker"
 import { Camera, CameraType } from "expo-camera"
 import * as FileSystem from "expo-file-system"
-import { useAIAnalysis } from "../hooks/useAIAnalysis"
+import { useAIAnalysis } from "./hooks/useAIAnalysis"
 
 interface Analysis {
   description: string
