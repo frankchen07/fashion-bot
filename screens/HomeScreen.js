@@ -31,7 +31,7 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Image source={require("../assets/logo.png")} style={styles.logo} resizeMode="contain" />
+        <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Men's Fashion Advisor</Text>
         <Text style={styles.subtitle}>Get AI-powered style recommendations based on your outfit</Text>
       </View>
