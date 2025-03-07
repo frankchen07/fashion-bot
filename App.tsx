@@ -32,11 +32,23 @@ export default function App() {
   const cameraRef = useRef<Camera | null>(null)
   const { analyzeFashionWithAI } = useAIAnalysis()
 
+  // // Request camera and photo library permissions
+  // const requestPermissions = async () => {
+  //   const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync()
+  //   const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+  //   if (cameraStatus !== "granted" || libraryStatus !== "granted") {
+  //     alert("We need camera and photo library permissions to make this work!")
+  //     return false
+  //   }
+  //   return true
+  // }
+
   // Request camera and photo library permissions
   const requestPermissions = async () => {
     const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync()
     const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-
+  
     if (cameraStatus !== "granted" || libraryStatus !== "granted") {
       alert("We need camera and photo library permissions to make this work!")
       return false
