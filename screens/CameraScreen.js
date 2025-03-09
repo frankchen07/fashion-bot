@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native"
-import { Camera } from "expo-camera"
+import { Camera, CameraType } from "expo-camera"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const CameraScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null)
-  const [type, setType] = useState(Camera.Constants.Type.back)
+  const [type, setType] = useState(CameraType.back)
   const [capturedImage, setCapturedImage] = useState(null)
   const cameraRef = useRef(null)
 
@@ -75,9 +75,7 @@ const CameraScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.flipButton}
                 onPress={() => {
-                  setType(
-                    type === Camera.Constants.Type.back ? Camera.Constants.Type.front : Camera.Constants.Type.back,
-                  )
+                  setType(type === CameraType.back ? CameraType.front : CameraType.back)
                 }}
               >
                 <Ionicons name="camera-reverse" size={28} color="#fff" />
