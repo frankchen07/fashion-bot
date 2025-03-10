@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Linking } from "react-native"
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 
@@ -9,70 +9,22 @@ const RecommendationsScreen = ({ route }) => {
   const { imageUri, analysis } = route.params
   const [activeTab, setActiveTab] = useState("analysis")
 
-  // In a real app, this would come from the AI analysis
-  // This is mock data for demonstration
-  const mockAnalysis = {
-    outfitItems: [
-      { name: "Navy Blazer", fit: "Slightly oversized", condition: "Good" },
-      { name: "White Dress Shirt", fit: "Regular", condition: "Wrinkled" },
-      { name: "Gray Trousers", fit: "Too long", condition: "Good" },
-      { name: "Brown Leather Shoes", fit: "Appropriate", condition: "Needs polish" },
-    ],
-    styleAssessment:
-      "Your outfit has good foundational elements of business casual attire, but there are some fit and styling issues that could be improved. The color palette is versatile, but the execution needs refinement.",
-    recommendations: [
-      "Have your trousers hemmed to achieve a slight break at the shoe",
-      "Iron your shirt to create a more polished appearance",
-      "Consider a slimmer cut blazer that follows your silhouette more closely",
-      "Polish your shoes to elevate the overall look",
-      "Add a pocket square for a touch of sophistication",
-    ],
-    inspirationOutfits: [
-      {
-        id: 1,
-        image: "https://i.imgur.com/JyERwB0.jpg",
-        description: "Classic business casual with proper fit",
-        items: [
-          "Navy tailored blazer",
-          "Crisp white shirt",
-          "Gray trousers with proper break",
-          "Polished brown cap-toe oxfords",
-          "Burgundy pocket square",
-        ],
-        shopLinks: [
-          { name: "Similar Blazer", url: "https://www.example.com/blazer" },
-          { name: "Dress Shirts", url: "https://www.example.com/shirts" },
-        ],
-      },
-      {
-        id: 2,
-        image: "https://i.imgur.com/nPDMJAn.jpg",
-        description: "Modern business casual with subtle pattern",
-        items: [
-          "Navy blazer with subtle texture",
-          "Light blue shirt",
-          "Charcoal gray trousers",
-          "Burgundy leather loafers",
-          "Patterned pocket square",
-        ],
-        shopLinks: [
-          { name: "Quality Trousers", url: "https://www.example.com/trousers" },
-          { name: "Leather Shoes", url: "https://www.example.com/shoes" },
-        ],
-      },
-    ],
+  // Fallback data in case analysis fails
+  const fallbackAnalysis = {
+    outfitItems: [{ name: "Analysis not available", fit: "N/A", condition: "N/A" }],
+    styleAssessment: "We couldn't analyze your outfit. Please try again with a clearer photo.",
+    recommendations: ["Take a photo with better lighting", "Ensure your full outfit is visible"],
     fashionTerms: [
-      { term: "Break", definition: "The fold or creasing of the trouser fabric when it meets the shoe" },
-      { term: "Blazer", definition: "A tailored jacket typically with structured shoulders and metal buttons" },
       {
-        term: "Oxford",
-        definition: "A dress shoe with closed lacing system where the eyelet tabs are stitched under the vamp",
+        term: "Style Analysis",
+        definition:
+          "The process of evaluating clothing choices based on fit, color coordination, and appropriateness for the occasion",
       },
     ],
   }
 
-  // Use the mock data for demonstration
-  const analysisData = analysis || mockAnalysis
+  // Use the analysis data or fallback if not available
+  const analysisData = analysis || fallbackAnalysis
 
   const renderAnalysisTab = () => (
     <View style={styles.tabContent}>
@@ -124,34 +76,6 @@ const RecommendationsScreen = ({ route }) => {
     </View>
   )
 
-  const renderInspirationTab = () => (
-    <View style={styles.tabContent}>
-      {analysisData.inspirationOutfits.map((outfit) => (
-        <View key={outfit.id} style={styles.inspirationCard}>
-          <Image source={{ uri: outfit.image }} style={styles.inspirationImage} resizeMode="cover" />
-          <View style={styles.inspirationDetails}>
-            <Text style={styles.inspirationTitle}>{outfit.description}</Text>
-            <Text style={styles.inspirationSubtitle}>Key Elements:</Text>
-            {outfit.items.map((item, index) => (
-              <View key={index} style={styles.inspirationItem}>
-                <Ionicons name="arrow-forward" size={16} color="#3d5a80" />
-                <Text style={styles.inspirationItemText}>{item}</Text>
-              </View>
-            ))}
-            <Text style={styles.inspirationSubtitle}>Shop Similar:</Text>
-            <View style={styles.shopLinks}>
-              {outfit.shopLinks.map((link, index) => (
-                <TouchableOpacity key={index} style={styles.shopButton} onPress={() => Linking.openURL(link.url)}>
-                  <Text style={styles.shopButtonText}>{link.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      ))}
-    </View>
-  )
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
@@ -174,18 +98,11 @@ const RecommendationsScreen = ({ route }) => {
               Recommendations
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "inspiration" && styles.activeTab]}
-            onPress={() => setActiveTab("inspiration")}
-          >
-            <Text style={[styles.tabText, activeTab === "inspiration" && styles.activeTabText]}>Inspiration</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
           {activeTab === "analysis" && renderAnalysisTab()}
           {activeTab === "recommendations" && renderRecommendationsTab()}
-          {activeTab === "inspiration" && renderInspirationTab()}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -339,65 +256,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#495057",
     lineHeight: 20,
-  },
-  inspirationCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    overflow: "hidden",
-  },
-  inspirationImage: {
-    width: "100%",
-    height: 200,
-  },
-  inspirationDetails: {
-    padding: 15,
-  },
-  inspirationTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#212529",
-    marginBottom: 12,
-  },
-  inspirationSubtitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#3d5a80",
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  inspirationItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-    gap: 8,
-  },
-  inspirationItemText: {
-    fontSize: 14,
-    color: "#495057",
-    flex: 1,
-  },
-  shopLinks: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 8,
-  },
-  shopButton: {
-    backgroundColor: "#e9ecef",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  shopButtonText: {
-    fontSize: 14,
-    color: "#3d5a80",
-    fontWeight: "500",
   },
 })
 
