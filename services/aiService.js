@@ -1,85 +1,115 @@
-// This is a mock implementation of the AI service
-// In a real app, you would integrate with an actual AI API like Deepseek
+import * as FileSystem from "expo-file-system"
+import { OPENAI_API_KEY } from "@env"
 
-export const analyzeOutfit = async (imageUri) => {
-    // In a real implementation, you would:
-    // 1. Convert the image to base64 or a blob
-    // 2. Send it to the AI API
-    // 3. Process the response
-  
-    // For demo purposes, we'll simulate a network request
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // This would be the response from the AI API
-        const mockAnalysisResult = {
-          outfitItems: [
-            { name: "Navy Blazer", fit: "Slightly oversized", condition: "Good" },
-            { name: "White Dress Shirt", fit: "Regular", condition: "Wrinkled" },
-            { name: "Gray Trousers", fit: "Too long", condition: "Good" },
-            { name: "Brown Leather Shoes", fit: "Appropriate", condition: "Needs polish" },
-          ],
-          styleAssessment:
-            "Your outfit has good foundational elements of business casual attire, but there are some fit and styling issues that could be improved. The color palette is versatile, but the execution needs refinement.",
-          recommendations: [
-            "Have your trousers hemmed to achieve a slight break at the shoe",
-            "Iron your shirt to create a more polished appearance",
-            "Consider a slimmer cut blazer that follows your silhouette more closely",
-            "Polish your shoes to elevate the overall look",
-            "Add a pocket square for a touch of sophistication",
-          ],
-          inspirationOutfits: [
-            {
-              id: 1,
-              image: "https://i.imgur.com/JyERwB0.jpg",
-              description: "Classic business casual with proper fit",
-              items: [
-                "Navy tailored blazer",
-                "Crisp white shirt",
-                "Gray trousers with proper break",
-                "Polished brown cap-toe oxfords",
-                "Burgundy pocket square",
-              ],
-              shopLinks: [
-                { name: "Similar Blazer", url: "https://www.example.com/blazer" },
-                { name: "Dress Shirts", url: "https://www.example.com/shirts" },
-              ],
-            },
-            {
-              id: 2,
-              image: "https://i.imgur.com/nPDMJAn.jpg",
-              description: "Modern business casual with subtle pattern",
-              items: [
-                "Navy blazer with subtle texture",
-                "Light blue shirt",
-                "Charcoal gray trousers",
-                "Burgundy leather loafers",
-                "Patterned pocket square",
-              ],
-              shopLinks: [
-                { name: "Quality Trousers", url: "https://www.example.com/trousers" },
-                { name: "Leather Shoes", url: "https://www.example.com/shoes" },
-              ],
-            },
-          ],
-          fashionTerms: [
-            { term: "Break", definition: "The fold or creasing of the trouser fabric when it meets the shoe" },
-            { term: "Blazer", definition: "A tailored jacket typically with structured shoulders and metal buttons" },
-            {
-              term: "Oxford",
-              definition: "A dress shoe with closed lacing system where the eyelet tabs are stitched under the vamp",
-            },
-          ],
-        }
-  
-        resolve(mockAnalysisResult)
-      }, 3000) // Simulate a 3-second API call
+// OpenAI API configuration
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+
+// Function to convert image to base64
+const imageToBase64 = async (imageUri) => {
+  try {
+    // Check if the image URI is a remote URL
+    if (imageUri.startsWith("http")) {
+      // Download the image first
+      const fileInfo = await FileSystem.downloadAsync(imageUri, FileSystem.documentDirectory + "temp_image.jpg")
+      imageUri = fileInfo.uri
+    }
+
+    // Read the file as base64
+    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
     })
+
+    return base64
+  } catch (error) {
+    console.error("Error converting image to base64:", error)
+    throw error
   }
-  
-  // In a real implementation, you would add functions to:
-  // 1. Prepare the image for the AI API
-  // 2. Handle API authentication
-  // 3. Process and format the AI response
-  // 4. Handle errors and retries
-  
-  
+}
+
+// Function to analyze outfit using OpenAI's Vision API
+export const analyzeOutfit = async (imageUri) => {
+  try {
+    // Verify API key is available
+    if (!OPENAI_API_KEY) {
+      throw new Error("OpenAI API key is not configured")
+    }
+    
+    // Convert image to base64
+    const base64Image = await imageToBase64(imageUri)
+
+    // Prepare the prompt for Derek Guy style analysis
+    const prompt = `
+      You are Derek Guy, the renowned menswear expert from Die, Workwear! This is your website: https://dieworkwear.com.
+
+      Analyze this outfit in your distinctive voice and expertise.
+      
+      Please provide:
+      1. A detailed breakdown of each visible clothing item (name, fit, condition)
+      2. An overall style assessment in your characteristic thoughtful, historically-informed perspective
+      3. Specific recommendations for improvement that reflect your deep knowledge of classic menswear
+      4. Key fashion terminology that would help educate the wearer
+      
+      Format your response as a JSON object with these keys:
+      - outfitItems: array of objects with {name, fit, condition}
+      - styleAssessment: string with your overall assessment
+      - recommendations: array of strings with specific suggestions
+      - fashionTerms: array of objects with {term, definition}
+    `
+
+    // Prepare the request payload
+    const payload = {
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+      response_format: { type: "json_object" },
+    }
+
+    // Make the API request
+    const response = await fetch(OPENAI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    // Parse the response
+    const data = await response.json()
+
+    if (data.error) {
+      throw new Error(data.error.message || "Error from OpenAI API")
+    }
+
+    // Extract and parse the JSON response
+    const content = data.choices[0].message.content
+    const analysisResult = JSON.parse(content)
+
+    return analysisResult
+  } catch (error) {
+    console.error("Error analyzing outfit:", error)
+
+    // Return a fallback response in case of error
+    return {
+      outfitItems: [{ name: "Item detection failed", fit: "Unable to analyze", condition: "Please try again" }],
+      styleAssessment:
+        "We encountered an error analyzing your outfit. Please check your internet connection and try again.",
+      recommendations: ["Try taking a photo with better lighting", "Ensure your full outfit is visible in the frame"],
+      fashionTerms: [{ term: "Error", definition: "We couldn't process your image. Please try again." }],
+    }
+  }
+}
+
