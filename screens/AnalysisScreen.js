@@ -73,8 +73,8 @@ const AnalysisScreen = ({ route, navigation }) => {
                     : progress < 60
                       ? "Analyzing style elements..."
                       : progress < 90
-                        ? "Generating recommendations..."
-                        : "Finalizing results..."}
+                        ? "Processing outfit details..."
+                        : "Finalizing analysis..."}
                 </Text>
               </View>
             </>
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginTop: 10,
-  },
+  }
 })
 
 export default AnalysisScreen
