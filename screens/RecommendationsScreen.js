@@ -15,12 +15,19 @@ const RecommendationsScreen = ({ route }) => {
 
   // Fallback data in case analysis fails
   const fallbackAnalysis = {
-    outfitItems: [{ name: "Analysis not available", fit: "N/A", condition: "N/A" }],
+    outfitItems: [{
+      "garment type or name": "Analysis not available",
+      "fit and silhouette": "Unable to analyze",
+      "condition and wear": "Please try again",
+      "fabric and texture": "N/A",
+      "styling and influence": "N/A"
+    }],
     styleDescription: "We couldn't analyze your outfit. Please try again with a clearer photo.",
   }
 
   // Use the analysis data or fallback if not available
   const analysisData = analysis || fallbackAnalysis
+  console.log("Analysis data received:", analysisData)
 
   // Load recommendations when switching to the recommendations tab
   useEffect(() => {
@@ -48,15 +55,23 @@ const RecommendationsScreen = ({ route }) => {
       <Text style={styles.sectionTitle}>Your Outfit Components</Text>
       {analysisData.outfitItems.map((item, index) => (
         <View key={index} style={styles.itemCard}>
-          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemName}>{item["garment type or name"]}</Text>
           <View style={styles.itemDetails}>
             <View style={styles.itemDetail}>
               <Text style={styles.itemDetailLabel}>Fit:</Text>
-              <Text style={styles.itemDetailValue}>{item.fit}</Text>
+              <Text style={styles.itemDetailValue}>{item["fit and silhouette"]}</Text>
             </View>
             <View style={styles.itemDetail}>
               <Text style={styles.itemDetailLabel}>Condition:</Text>
-              <Text style={styles.itemDetailValue}>{item.condition}</Text>
+              <Text style={styles.itemDetailValue}>{item["condition and wear"]}</Text>
+            </View>
+            <View style={styles.itemDetail}>
+              <Text style={styles.itemDetailLabel}>Fabric:</Text>
+              <Text style={styles.itemDetailValue}>{item["fabric and texture"]}</Text>
+            </View>
+            <View style={styles.itemDetail}>
+              <Text style={styles.itemDetailLabel}>Style:</Text>
+              <Text style={styles.itemDetailValue}>{item["styling and influence"]}</Text>
             </View>
           </View>
         </View>
@@ -221,21 +236,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   itemDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
+    gap: 8,
   },
   itemDetail: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
   itemDetailLabel: {
     fontSize: 14,
     color: "#6c757d",
     marginRight: 4,
+    minWidth: 80,
   },
   itemDetailValue: {
     fontSize: 14,
     color: "#212529",
+    flex: 1,
+    flexWrap: "wrap",
   },
   assessmentCard: {
     backgroundColor: "#fff",

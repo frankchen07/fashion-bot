@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "4c3630ec-25e2-464c-b83d-110f700320f3"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.frankchen07.fashionadvisor",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
