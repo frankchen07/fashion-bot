@@ -1,13 +1,9 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native"
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as ImagePicker from "expo-image-picker"
 
 const HomeScreen = ({ navigation }) => {
-  const handleTakePhoto = () => {
-    navigation.navigate("Camera")
-  }
-
   const handleChoosePhoto = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
 
@@ -30,39 +26,36 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>Men's Fashion Advisor</Text>
-        <Text style={styles.subtitle}>Get AI-powered style recommendations based on your outfit</Text>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleTakePhoto}>
-          <Ionicons name="camera" size={32} color="#fff" />
-          <Text style={styles.buttonText}>Take a Photo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleChoosePhoto}>
-          <Ionicons name="image" size={32} color="#fff" />
-          <Text style={styles.buttonText}>Choose from Gallery</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>How it works</Text>
-        <View style={styles.infoItem}>
-          <Ionicons name="shirt-outline" size={24} color="#495057" />
-          <Text style={styles.infoText}>Capture or upload a photo of your outfit</Text>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.title}>Men's Fashion Advisor</Text>
+          <Text style={styles.subtitle}>Get AI-powered (Derek Guy's) style recommendations based on your outfit</Text>
         </View>
-        <View style={styles.infoItem}>
-          <Ionicons name="analytics-outline" size={24} color="#495057" />
-          <Text style={styles.infoText}>Our AI analyzes your style</Text>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={handleChoosePhoto}>
+            <Ionicons name="image" size={32} color="#fff" />
+            <Text style={styles.buttonText}>Choose Photo</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.infoItem}>
-          <Ionicons name="thumbs-up-outline" size={24} color="#495057" />
-          <Text style={styles.infoText}>Get personalized recommendations</Text>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoTitle}>How it works</Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="image-outline" size={24} color="#495057" />
+            <Text style={styles.infoText}>Select a photo of your outfit from your gallery</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Ionicons name="analytics-outline" size={24} color="#495057" />
+            <Text style={styles.infoText}>Our AI (Derek Guy) analyzes your style</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Ionicons name="thumbs-up-outline" size={24} color="#495057" />
+            <Text style={styles.infoText}>Get personalized recommendations</Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -72,14 +65,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     alignItems: "center",
-    padding: 20,
+    padding: 0,
+    marginTop: -40, // This will make the logo extend up into the safe area
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 10,
+    width: 200,
+    height: 200,
+    marginBottom: 0,
   },
   title: {
     fontSize: 24,
@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     padding: 20,
-    gap: 16,
   },
   button: {
     backgroundColor: "#3d5a80",
@@ -105,9 +104,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 12,
-  },
-  secondaryButton: {
-    backgroundColor: "#457b9d",
   },
   buttonText: {
     color: "#fff",

@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 
 // Import screens
 import HomeScreen from "./screens/HomeScreen"
-import CameraScreen from "./screens/CameraScreen"
+import PhotoPickerScreen from "./screens/PhotoPickerScreen"
 import AnalysisScreen from "./screens/AnalysisScreen"
 import RecommendationsScreen from "./screens/RecommendationsScreen"
 
@@ -29,7 +29,7 @@ export default function App() {
           }}
         >
           <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Fashion Advisor" }} />
-          <Stack.Screen name="Camera" component={CameraScreen} options={{ title: "Capture Outfit" }} />
+          <Stack.Screen name="Camera" component={PhotoPickerScreen} options={{ title: "Choose Photo" }} />
           <Stack.Screen name="Analysis" component={AnalysisScreen} options={{ title: "Analyzing Outfit" }} />
           <Stack.Screen
             name="Recommendations"
