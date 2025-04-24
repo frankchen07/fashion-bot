@@ -6,16 +6,14 @@ import * as ImagePicker from "expo-image-picker"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-const CameraScreen = ({ navigation }) => {
+const PhotoPickerScreen = ({ navigation }) => {
   const [hasPermission, setHasPermission] = useState(null)
-  const [capturedImage, setCapturedImage] = useState(null)
+  const [selectedImage, setSelectedImage] = useState(null)
 
   useEffect(() => {
     const getPermission = async () => {
       try {
-        console.log("Requesting media library permission...")
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        console.log("Media library permission status:", status)
         setHasPermission(status === "granted")
       } catch (error) {
         console.error("Error requesting permission:", error)
@@ -36,7 +34,7 @@ const CameraScreen = ({ navigation }) => {
       })
 
       if (!result.canceled) {
-        setCapturedImage(result.assets[0].uri)
+        setSelectedImage(result.assets[0].uri)
       }
     } catch (error) {
       console.error("Error picking image:", error)
@@ -44,11 +42,11 @@ const CameraScreen = ({ navigation }) => {
   }
 
   const retakePicture = () => {
-    setCapturedImage(null)
+    setSelectedImage(null)
   }
 
   const confirmPicture = () => {
-    navigation.navigate("Analysis", { imageUri: capturedImage })
+    navigation.navigate("Analysis", { imageUri: selectedImage })
   }
 
   const openSettings = () => {
@@ -76,14 +74,14 @@ const CameraScreen = ({ navigation }) => {
           <Text style={styles.pickerButtonText}>Choose Photo</Text>
         </TouchableOpacity>
       </View>
-    );
-  };
+    )
+  }
 
   // Render the image preview UI
   const renderPreview = () => {
     return (
       <View style={styles.previewContainer}>
-        <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+        <Image source={{ uri: selectedImage }} style={styles.previewImage} />
         <View style={styles.previewActions}>
           <TouchableOpacity style={styles.actionButton} onPress={retakePicture}>
             <Ionicons name="refresh" size={24} color="#fff" />
@@ -95,33 +93,22 @@ const CameraScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    );
-  };
+    )
+  }
 
   if (hasPermission === null) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.permissionText}>Requesting gallery permission...</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={retryPermission}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    )
+    return <View style={styles.container}><Text style={styles.permissionText}>Requesting permissions...</Text></View>
   }
 
   if (hasPermission === false) {
     return (
       <View style={styles.container}>
-        <Text style={styles.permissionText}>No access to gallery</Text>
-        <Text style={styles.permissionSubText}>Please enable gallery permissions in your device settings</Text>
-        <TouchableOpacity 
-          style={styles.settingsButton}
-          onPress={openSettings}
-        >
+        <Text style={styles.permissionText}>Gallery access is required</Text>
+        <TouchableOpacity style={styles.settingsButton} onPress={openSettings}>
           <Text style={styles.settingsButtonText}>Open Settings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.retryButton} onPress={retryPermission}>
+          <Text style={styles.retryButtonText}>Retry Permission</Text>
         </TouchableOpacity>
       </View>
     )
@@ -129,7 +116,7 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {capturedImage ? renderPreview() : renderImagePicker()}
+      {selectedImage ? renderPreview() : renderImagePicker()}
     </SafeAreaView>
   )
 }
@@ -140,107 +127,92 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-  },
-  permissionText: {
-    color: "#fff",
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  permissionSubText: {
-    color: "#ddd",
-    textAlign: "center",
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: "#3d5a80",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  retryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  settingsButton: {
-    backgroundColor: "#2a9d8f",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  settingsButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
   },
   pickerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    width: "100%",
     padding: 20,
   },
   pickerText: {
     color: "#fff",
     fontSize: 18,
+    marginBottom: 20,
     textAlign: "center",
-    marginBottom: 30,
   },
   pickerButton: {
-    backgroundColor: "#3d5a80",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 12,
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
   },
   pickerButtonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    marginLeft: 10,
   },
   previewContainer: {
     flex: 1,
+    backgroundColor: "#000",
     width: "100%",
   },
   previewImage: {
     flex: 1,
+    resizeMode: "contain",
   },
   previewActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     position: "absolute",
-    bottom: 30,
-    left: 30,
-    right: 30,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   actionButton: {
-    backgroundColor: "#3d5a80",
-    borderRadius: 12,
-    padding: 15,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    flex: 0.48,
-    gap: 8,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   confirmButton: {
-    backgroundColor: "#2a9d8f",
+    backgroundColor: "#4CAF50",
   },
   actionText: {
     color: "#fff",
+    marginLeft: 5,
+  },
+  permissionText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  settingsButton: {
+    backgroundColor: "#007AFF",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  settingsButtonText: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: "600",
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
   },
 })
 
-export default CameraScreen
+export default PhotoPickerScreen
 
