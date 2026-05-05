@@ -4,7 +4,19 @@ import { useState, useEffect } from "react"
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
-import { generateRecommendations } from "../services/aiService"
+import { generateRecommendations, normalizeAnalysis } from "../services/aiService"
+
+const SOURCE_DISPLAY_NAMES = {
+  dieworkwear: "Derek Guy (Die, Workwear!)",
+  permanentstyle: "Permanent Style",
+  sartorialnotes: "Sartorial Notes",
+  gentlemansgazette: "Gentleman's Gazette",
+  apetogentleman: "Ape to Gentleman",
+  realmenrealstyle: "Real Men Real Style",
+  dappered: "Dappered",
+  articlesofstyle: "Articles of Style",
+  general: "Expert Assessment",
+}
 
 const RecommendationsScreen = ({ route }) => {
   const { imageUri, analysis } = route.params
@@ -13,7 +25,6 @@ const RecommendationsScreen = ({ route }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Fallback data in case analysis fails
   const fallbackAnalysis = {
     outfitItems: [{
       "garment type or name": "Analysis not available",
@@ -23,13 +34,12 @@ const RecommendationsScreen = ({ route }) => {
       "styling and influence": "N/A"
     }],
     styleDescription: "We couldn't analyze your outfit. Please try again with a clearer photo.",
+    fashionTerms: [],
   }
 
-  // Use the analysis data or fallback if not available
-  const analysisData = analysis || fallbackAnalysis
+  const analysisData = normalizeAnalysis(analysis || fallbackAnalysis)
   console.log("Analysis data received:", analysisData)
 
-  // Load recommendations when switching to the recommendations tab
   useEffect(() => {
     const loadRecommendations = async () => {
       if (activeTab === "recommendations" && !recommendations && !loading) {
@@ -52,49 +62,91 @@ const RecommendationsScreen = ({ route }) => {
 
   const renderAnalysisTab = () => (
     <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Your Outfit Components</Text>
-      {analysisData.outfitItems.map((item, index) => (
-        <View key={index} style={styles.itemCard}>
-          <Text style={styles.itemName}>{item["garment type or name"]}</Text>
-          <View style={styles.itemDetails}>
-            <View style={styles.itemDetail}>
-              <Text style={styles.itemDetailLabel}>Fit:</Text>
-              <Text style={styles.itemDetailValue}>{item["fit and silhouette"]}</Text>
-            </View>
-            <View style={styles.itemDetail}>
-              <Text style={styles.itemDetailLabel}>Condition:</Text>
-              <Text style={styles.itemDetailValue}>{item["condition and wear"]}</Text>
-            </View>
-            <View style={styles.itemDetail}>
-              <Text style={styles.itemDetailLabel}>Fabric:</Text>
-              <Text style={styles.itemDetailValue}>{item["fabric and texture"]}</Text>
-            </View>
-            <View style={styles.itemDetail}>
-              <Text style={styles.itemDetailLabel}>Style:</Text>
-              <Text style={styles.itemDetailValue}>{item["styling and influence"]}</Text>
-            </View>
-          </View>
-        </View>
-      ))}
-
       <Text style={styles.sectionTitle}>Style Description</Text>
       <View style={styles.assessmentCard}>
         <Text style={styles.assessmentText}>{analysisData.styleDescription}</Text>
       </View>
+
+      <Text style={styles.sectionTitle}>Your Outfit Components</Text>
+      {(!analysisData.outfitItems || analysisData.outfitItems.length === 0) ? (
+        <View style={styles.assessmentCard}>
+          <Text style={styles.assessmentText}>No outfit components found for this entry.</Text>
+        </View>
+      ) : null}
+      {(analysisData.outfitItems || []).map((item, index) => {
+        const name = item["garment type or name"] || `Item ${index + 1}`
+        return (
+          <View key={index} style={styles.itemCard}>
+            <Text style={styles.itemName}>{name}</Text>
+            <View style={styles.itemDetails}>
+              <View style={styles.itemDetail}>
+                <Text style={styles.itemDetailLabel}>Fit:</Text>
+                <Text style={styles.itemDetailValue}>{item["fit and silhouette"]}</Text>
+              </View>
+              <View style={styles.itemDetail}>
+                <Text style={styles.itemDetailLabel}>Condition:</Text>
+                <Text style={styles.itemDetailValue}>{item["condition and wear"]}</Text>
+              </View>
+              <View style={styles.itemDetail}>
+                <Text style={styles.itemDetailLabel}>Fabric:</Text>
+                <Text style={styles.itemDetailValue}>{item["fabric and texture"]}</Text>
+              </View>
+              <View style={styles.itemDetail}>
+                <Text style={styles.itemDetailLabel}>Style:</Text>
+                <Text style={styles.itemDetailValue}>{item["styling and influence"]}</Text>
+              </View>
+            </View>
+          </View>
+        )
+      })}
+
+      {analysisData.fashionTerms && analysisData.fashionTerms.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Fashion Terminology</Text>
+          <View style={styles.termsCard}>
+            {analysisData.fashionTerms.map((term, index) => (
+              <View key={index} style={[styles.termItem, index === analysisData.fashionTerms.length - 1 && styles.termItemLast]}>
+                <Text style={styles.termName}>{term.term}</Text>
+                <Text style={styles.termDefinition}>{term.definition}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
     </View>
   )
+
+  const renderSourceCard = (sourceEntry, index) => {
+    const displayName = SOURCE_DISPLAY_NAMES[sourceEntry.source] || sourceEntry.source
+    return (
+      <View key={index} style={styles.sourceCard}>
+        <Text style={styles.sourceTitle}>{displayName}</Text>
+        <Text style={styles.assessmentText}>{sourceEntry.styleAssessment}</Text>
+        {sourceEntry.recommendations && sourceEntry.recommendations.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            {sourceEntry.recommendations.map((rec, i) => (
+              <View key={i} style={styles.recommendationItem}>
+                <Ionicons name="checkmark-circle" size={20} color="#2a9d8f" />
+                <Text style={styles.recommendationText}>{rec}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    )
+  }
 
   const renderRecommendationsTab = () => (
     <View style={styles.tabContent}>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3d5a80" />
-          <Text style={styles.loadingText}>Generating expert recommendations...</Text>
+          <Text style={styles.loadingText}>Gathering expert opinions...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.retryButton}
             onPress={() => {
               setRecommendations(null)
@@ -107,30 +159,9 @@ const RecommendationsScreen = ({ route }) => {
         </View>
       ) : recommendations ? (
         <>
-          <Text style={styles.sectionTitle}>Expert Style Assessment</Text>
-          <View style={styles.assessmentCard}>
-            <Text style={styles.assessmentText}>{recommendations.styleAssessment}</Text>
-          </View>
-
-          <Text style={styles.sectionTitle}>Improvement Suggestions</Text>
-          <View style={styles.recommendationsCard}>
-            {recommendations.recommendations.map((recommendation, index) => (
-              <View key={index} style={styles.recommendationItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2a9d8f" />
-                <Text style={styles.recommendationText}>{recommendation}</Text>
-              </View>
-            ))}
-          </View>
-
-          <Text style={styles.sectionTitle}>Fashion Terminology</Text>
-          <View style={styles.termsCard}>
-            {recommendations.fashionTerms.map((term, index) => (
-              <View key={index} style={styles.termItem}>
-                <Text style={styles.termName}>{term.term}</Text>
-                <Text style={styles.termDefinition}>{term.definition}</Text>
-              </View>
-            ))}
-          </View>
+          {(recommendations.sources || []).map((sourceEntry, index) =>
+            renderSourceCard(sourceEntry, index)
+          )}
         </>
       ) : null}
     </View>
@@ -155,7 +186,7 @@ const RecommendationsScreen = ({ route }) => {
             onPress={() => setActiveTab("recommendations")}
           >
             <Text style={[styles.tabText, activeTab === "recommendations" && styles.activeTabText]}>
-              Derek Guy's Take
+              Recommendations
             </Text>
           </TouchableOpacity>
         </View>
@@ -267,32 +298,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   assessmentText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#212529",
-    lineHeight: 24,
-  },
-  recommendationsCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    marginBottom: 20,
-  },
-  recommendationItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-    gap: 8,
-  },
-  recommendationText: {
-    fontSize: 16,
-    color: "#212529",
-    flex: 1,
     lineHeight: 22,
+    marginBottom: 12,
   },
   termsCard: {
     backgroundColor: "#fff",
@@ -311,6 +320,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e9ecef",
     paddingBottom: 12,
   },
+  termItemLast: {
+    borderBottomWidth: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
+  },
   termName: {
     fontSize: 16,
     fontWeight: "600",
@@ -320,6 +334,40 @@ const styles = StyleSheet.create({
   termDefinition: {
     fontSize: 14,
     color: "#495057",
+    lineHeight: 20,
+  },
+  sourceCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sourceTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#3d5a80",
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
+    paddingBottom: 8,
+  },
+  suggestionsContainer: {
+    gap: 8,
+  },
+  recommendationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  recommendationText: {
+    fontSize: 14,
+    color: "#212529",
+    flex: 1,
     lineHeight: 20,
   },
   loadingContainer: {
@@ -358,4 +406,3 @@ const styles = StyleSheet.create({
 })
 
 export default RecommendationsScreen
-

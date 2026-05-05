@@ -2,7 +2,7 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "4c3630ec-25e2-464c-b83d-110f700320f3"
+        "projectId": "770f4e39-65f6-46ff-a46c-21737958de8b"
       }
     },
     "ios": {
@@ -10,6 +10,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
-    }
+    },
+    "owner": "frankchen07"
   }
 }

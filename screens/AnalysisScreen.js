@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { StyleSheet, View, Text, Image, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { analyzeOutfit } from "../services/aiService"
+import { saveAnalysis } from "../services/storageService"
 
 const AnalysisScreen = ({ route, navigation }) => {
   const { imageUri } = route.params
@@ -32,10 +33,18 @@ const AnalysisScreen = ({ route, navigation }) => {
         clearInterval(progressInterval)
         setProgress(100)
 
-        // Navigate to recommendations screen with the analysis results
+        // Save to history; get back the persistent image URI to hand off to next screen
+        let finalImageUri = imageUri
+        try {
+          const entry = await saveAnalysis(imageUri, analysisResult)
+          finalImageUri = entry.imageUri
+        } catch (e) {
+          console.error("Failed to save to history:", e)
+        }
+
         setTimeout(() => {
           navigation.replace("Recommendations", {
-            imageUri,
+            imageUri: finalImageUri,
             analysis: analysisResult,
           })
         }, 500)

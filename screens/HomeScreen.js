@@ -1,28 +1,18 @@
+import { useEffect } from "react"
 import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
-import * as ImagePicker from "expo-image-picker"
 
 const HomeScreen = ({ navigation }) => {
-  const handleChoosePhoto = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
-
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!")
-      return
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate("History")} hitSlop={8} style={{ marginRight: 4 }}>
+          <Ionicons name="time-outline" size={24} color="#3d5a80" />
+        </TouchableOpacity>
+      ),
     })
-
-    if (!result.canceled) {
-      navigation.navigate("Analysis", { imageUri: result.assets[0].uri })
-    }
-  }
+  }, [navigation])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -34,17 +24,17 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={handleChoosePhoto}>
-            <Ionicons name="image" size={32} color="#fff" />
-            <Text style={styles.buttonText}>Choose Photo</Text>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Camera")}>
+            <Ionicons name="camera" size={32} color="#fff" />
+            <Text style={styles.buttonText}>Analyze Outfit</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoTitle}>How it works</Text>
           <View style={styles.infoItem}>
-            <Ionicons name="image-outline" size={24} color="#495057" />
-            <Text style={styles.infoText}>Select a photo of your outfit from your gallery</Text>
+            <Ionicons name="camera-outline" size={24} color="#495057" />
+            <Text style={styles.infoText}>Take a photo or pick from your gallery</Text>
           </View>
           <View style={styles.infoItem}>
             <Ionicons name="analytics-outline" size={24} color="#495057" />
@@ -74,7 +64,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     padding: 0,
-    marginTop: -40, // This will make the logo extend up into the safe area
+    marginTop: -40,
   },
   logo: {
     width: 200,
@@ -141,4 +131,3 @@ const styles = StyleSheet.create({
 })
 
 export default HomeScreen
-

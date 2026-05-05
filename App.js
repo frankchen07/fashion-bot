@@ -8,6 +8,7 @@ import HomeScreen from "./screens/HomeScreen"
 import PhotoPickerScreen from "./screens/PhotoPickerScreen"
 import AnalysisScreen from "./screens/AnalysisScreen"
 import RecommendationsScreen from "./screens/RecommendationsScreen"
+import HistoryScreen from "./screens/HistoryScreen"
 
 const Stack = createNativeStackNavigator()
 
@@ -36,6 +37,7 @@ export default function App() {
             component={RecommendationsScreen}
             options={{ title: "Style Recommendations" }}
           />
+          <Stack.Screen name="History" component={HistoryScreen} options={{ title: "Wardrobe History" }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

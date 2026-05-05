@@ -9,7 +9,7 @@ module.exports = (api) => {
             moduleName: "@env",
             path: ".env",
             blacklist: null,
-            whitelist: null,
+            whitelist: ["OPENAI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY"],
             safe: false,
             allowUndefined: true,
           },

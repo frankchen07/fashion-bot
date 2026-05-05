@@ -1,5 +1,23 @@
-import * as FileSystem from "expo-file-system"
+import * as FileSystem from "expo-file-system/legacy"
 import { OPENAI_API_KEY } from "@env"
+import { getSourceGroupedContext } from "./ragService"
+
+const pick = (obj, ...keys) => {
+  for (const k of keys) if (obj[k] != null) return obj[k]
+  return ""
+}
+
+export const normalizeAnalysis = (raw) => ({
+  ...raw,
+  fashionTerms: raw.fashionTerms || [],
+  outfitItems: (raw.outfitItems || []).map((item) => ({
+    "garment type or name": pick(item, "garment type or name", "garmentTypeOrName", "garmentType", "garment_type_or_name", "name", "type"),
+    "fit and silhouette":   pick(item, "fit and silhouette",   "fitAndSilhouette",   "fit_and_silhouette",   "fit", "silhouette"),
+    "condition and wear":   pick(item, "condition and wear",   "conditionAndWear",   "condition_and_wear",   "condition", "wear"),
+    "fabric and texture":   pick(item, "fabric and texture",   "fabricAndTexture",   "fabric_and_texture",   "fabric", "texture", "material"),
+    "styling and influence": pick(item, "styling and influence", "stylingAndInfluence", "styling_and_influence", "styling", "style", "influence"),
+  })),
+})
 
 // OpenAI API configuration
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
@@ -90,10 +108,12 @@ export const analyzeOutfit = async (imageUri) => {
         	- Refinement → Understated, elegant, rakish, insouciant, refined, subtle
 
       2. An objective description of the overall style
-      
+      3. Key fashion terminology relevant to the identified garments (terms a wearer should know)
+
       Format your response as a JSON object with these keys:
       - outfitItems: array of objects with {"garment type or name", "fit and silhouette", "condition and wear", "fabric and texture", "styling and influence"}
       - styleDescription: string with your factual description of the outfit
+      - fashionTerms: array of objects with {term, definition}
     `
     // Prepare the request payload
     const payload = {
@@ -112,7 +132,7 @@ export const analyzeOutfit = async (imageUri) => {
           ],
         },
       ],
-      max_tokens: 1000,
+      max_tokens: 1500,
       response_format: { type: "json_object" },
     }
 
@@ -147,7 +167,7 @@ export const analyzeOutfit = async (imageUri) => {
     const analysisResult = JSON.parse(content)
     console.log("Parsed analysis result:", JSON.stringify(analysisResult, null, 2))
 
-    return analysisResult
+    return normalizeAnalysis(analysisResult)
   } catch (error) {
     console.error("Error analyzing outfit:", error)
     if (error.message.includes('timed out')) {
@@ -177,53 +197,79 @@ export const analyzeOutfit = async (imageUri) => {
   }
 }
 
-// Function to generate recommendations based on outfit analysis
+const SOURCE_VOICES = {
+  dieworkwear: "Derek Guy from Die, Workwear! (dieworkwear.com) — historically-informed, precise, draws on tailoring tradition and Ivy League menswear, intellectually serious but accessible",
+  permanentstyle: "Permanent Style — focused on luxury craft, made-to-measure, bespoke tailoring, and quality materials; refined and authoritative",
+  sartorialnotes: "Sartorial Notes — thoughtful, collector-minded, emphasis on classic Italian and English tailoring, details and provenance matter",
+  gentlemansgazette: "Gentleman's Gazette — encyclopedic, formal, rooted in traditional dress codes and historical menswear etiquette",
+  apetogentleman: "Ape to Gentleman — approachable, contemporary, bridges streetwear and smart-casual; practical for a modern audience",
+  realmenrealstyle: "Real Men Real Style — direct, actionable, focused on building a versatile wardrobe; practical and encouraging",
+  dappered: "Dappered — budget-conscious, value-focused, everyday style for regular guys; concrete and unpretentious",
+  articlesofstyle: "Articles of Style — Chicago-based made-to-measure perspective; personal, story-driven, emphasis on fit and individuality",
+}
+
+// Function to generate per-source recommendations based on outfit analysis
 export const generateRecommendations = async (analysisResult) => {
   try {
-    // Verify API key is available
     if (!OPENAI_API_KEY) {
       throw new Error("OpenAI API key is not configured")
     }
 
-    // Convert the analysis result to a string description
     const outfitDescription = JSON.stringify(analysisResult)
     console.log("Generating recommendations for:", outfitDescription)
 
-    // Prepare the prompt for Derek Guy style recommendations
-    const prompt = `
-      You are Derek Guy, the renowned menswear expert from Die, Workwear! This is your website: https://dieworkwear.com.
+    const groupedContext = await getSourceGroupedContext(analysisResult)
 
-      Based on the following outfit description, provide recommendations in your distinctive voice and expertise:
-      ${outfitDescription}
-      
-      Please provide:
-      1. An overall style assessment in your characteristic thoughtful, historically-informed perspective
-      2. Specific recommendations for improvement that reflect your deep knowledge of classic menswear. You may also say, "it's pretty good" if it's something you'd wear yourself, which will let me know that my outfit is already on point. You may also say, "it needs a lot of improvement" if it's something that's pretty bad.
-      3. Key fashion terminology that would help educate the wearer
-      
-      Format your response as a JSON object with these keys:
-      - styleAssessment: string with your overall assessment
-      - recommendations: array of strings with specific suggestions
-      - fashionTerms: array of objects with {term, definition}
-    `
+    let sourceSections = ""
+    let sourceList = []
 
-    // Prepare the request payload
+    if (groupedContext && Object.keys(groupedContext).length > 0) {
+      sourceList = Object.keys(groupedContext)
+      sourceSections = sourceList.map((src) => {
+        const voice = SOURCE_VOICES[src] || src
+        return `--- SOURCE: ${src} ---\nVoice: ${voice}\nRelevant excerpts:\n${groupedContext[src]}`
+      }).join("\n\n")
+    } else {
+      // Fallback: no RAG context, generate a single generic take
+      sourceList = ["general"]
+      sourceSections = "No source context available — use your general menswear expertise."
+    }
+
+    const allowedSources = sourceList.join(", ")
+
+    const prompt = groupedContext
+      ? `You are a fashion recommendation engine. For each menswear publication below, write a style assessment and specific recommendations IN THAT PUBLICATION'S CHARACTERISTIC VOICE, grounded in the provided excerpts.
+
+Outfit:
+${outfitDescription}
+
+${sourceSections}
+
+Return a JSON object with exactly one key "sources" — an array where each object has:
+- "source": MUST be exactly one of these identifiers: ${allowedSources}
+- "styleAssessment": 2-3 sentences in that publication's voice
+- "recommendations": array of 2-4 specific suggestion strings
+
+IMPORTANT: Only include sources from this list: ${allowedSources}. Do not invent or add any other source names. Do not include fashionTerms.`
+      : `You are a menswear expert. Analyze this outfit and give practical recommendations.
+
+Outfit:
+${outfitDescription}
+
+Return a JSON object with exactly one key "sources" containing exactly one object:
+{ "source": "general", "styleAssessment": "...", "recommendations": ["...", "..."] }
+
+Do not use any other source name besides "general". Do not include fashionTerms.`
+
     const payload = {
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 2000,
       response_format: { type: "json_object" },
     }
 
     console.log("Sending recommendations request to OpenAI API...")
-    console.log("Payload:", JSON.stringify(payload, null, 2))
 
-    // Make the API request with timeout
     const response = await makeAPICall(OPENAI_API_URL, {
       method: "POST",
       headers: {
@@ -235,9 +281,6 @@ export const generateRecommendations = async (analysisResult) => {
 
     console.log("Recommendations API Response status:", response.status)
     const responseText = await response.text()
-    console.log("Raw recommendations response:", responseText)
-
-    // Parse the response
     const data = JSON.parse(responseText)
 
     if (data.error) {
@@ -245,28 +288,23 @@ export const generateRecommendations = async (analysisResult) => {
       throw new Error(data.error.message || "Error from OpenAI API")
     }
 
-    // Extract and parse the JSON response
     const content = data.choices[0].message.content
-    console.log("Raw recommendations content:", content)
-    const recommendationsResult = JSON.parse(content)
-    console.log("Parsed recommendations result:", JSON.stringify(recommendationsResult, null, 2))
-
-    return recommendationsResult
+    const result = JSON.parse(content)
+    console.log("Parsed recommendations result:", JSON.stringify(result, null, 2))
+    return result
   } catch (error) {
     console.error("Error generating recommendations:", error)
-    if (error.message.includes('timed out')) {
-      return {
-        styleAssessment: "The request timed out. Please try again with a better internet connection.",
-        recommendations: ["Try again with a better internet connection", "Check your network stability"],
-        fashionTerms: [{ term: "Timeout", definition: "The request took too long to complete. Please try again." }],
-      }
-    }
-
-    // Return a fallback response in case of error
+    const timedOut = error.message.includes("timed out")
     return {
-      styleAssessment: "We encountered an error generating recommendations. Please try again.",
-      recommendations: ["Try taking a photo with better lighting", "Ensure your full outfit is visible in the frame"],
-      fashionTerms: [{ term: "Error", definition: "We couldn't process your request. Please try again." }],
+      sources: [{
+        source: "general",
+        styleAssessment: timedOut
+          ? "The request timed out. Please try again with a better internet connection."
+          : "We encountered an error generating recommendations. Please try again.",
+        recommendations: timedOut
+          ? ["Try again with a better internet connection", "Check your network stability"]
+          : ["Try taking a photo with better lighting", "Ensure your full outfit is visible in the frame"],
+      }],
     }
   }
 }
@@ -274,31 +312,18 @@ export const generateRecommendations = async (analysisResult) => {
 // Function to combine analysis and recommendations
 export const getCompleteOutfitAnalysis = async (analysisResult) => {
   try {
-    // Generate recommendations based on the analysis
     const recommendationsResult = await generateRecommendations(analysisResult)
-    
-    // Combine the results
     return {
       outfitItems: analysisResult.outfitItems,
-      styleAssessment: recommendationsResult.styleAssessment,
-      recommendations: recommendationsResult.recommendations,
-      fashionTerms: recommendationsResult.fashionTerms,
+      fashionTerms: analysisResult.fashionTerms || [],
+      sources: recommendationsResult.sources || [],
     }
   } catch (error) {
     console.error("Error combining analysis and recommendations:", error)
-    
-    // Return a fallback response
     return {
-      outfitItems: analysisResult.outfitItems || [{
-        "garment type or name": "Item detection failed",
-        "fit and silhouette": "Unable to analyze",
-        "condition and wear": "Please try again",
-        "fabric and texture": "N/A",
-        "styling and influence": "N/A"
-      }],
-      styleAssessment: "We encountered an error generating recommendations. Please try again.",
-      recommendations: ["Try taking a photo with better lighting", "Ensure your full outfit is visible in the frame"],
-      fashionTerms: [{ term: "Error", definition: "We couldn't process your request. Please try again." }],
+      outfitItems: analysisResult.outfitItems || [],
+      fashionTerms: [],
+      sources: [],
     }
   }
 }
