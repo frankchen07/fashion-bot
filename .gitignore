@@ -1,6 +1,8 @@
 node_modules/
 .expo/
 dist/
+.claude/
+logs/
 npm-debug.*
 *.jks
 *.p8
@@ -11,6 +13,7 @@ npm-debug.*
 web-build/
 .env
 .readme.md
+*.sql
 
 # macOS
 .DS_Store
