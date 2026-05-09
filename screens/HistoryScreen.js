@@ -38,8 +38,12 @@ const HistoryScreen = ({ navigation }) => {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteEntry(id)
-          setHistory((prev) => prev.filter((e) => e.id !== id))
+          try {
+            await deleteEntry(id)
+            setHistory((prev) => prev.filter((e) => e.id !== id))
+          } catch (e) {
+            Alert.alert("Error", "Failed to delete entry. Please try again.")
+          }
         },
       },
     ])
@@ -49,6 +53,7 @@ const HistoryScreen = ({ navigation }) => {
     navigation.navigate("Recommendations", {
       imageUri: entry.imageUri,
       analysis: entry.analysis,
+      entryId: entry.id,
     })
   }
 

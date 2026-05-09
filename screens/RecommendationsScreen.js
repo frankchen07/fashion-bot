@@ -1,10 +1,9 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { generateRecommendations, normalizeAnalysis } from "../services/aiService"
+import { getRecommendations, saveRecommendations } from "../services/storageService"
 
 const SOURCE_DISPLAY_NAMES = {
   dieworkwear: "Derek Guy (Die, Workwear!)",
@@ -19,7 +18,7 @@ const SOURCE_DISPLAY_NAMES = {
 }
 
 const RecommendationsScreen = ({ route }) => {
-  const { imageUri, analysis } = route.params
+  const { imageUri, analysis, entryId } = route.params
   const [activeTab, setActiveTab] = useState("analysis")
   const [recommendations, setRecommendations] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -38,7 +37,6 @@ const RecommendationsScreen = ({ route }) => {
   }
 
   const analysisData = normalizeAnalysis(analysis || fallbackAnalysis)
-  console.log("Analysis data received:", analysisData)
 
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -46,10 +44,23 @@ const RecommendationsScreen = ({ route }) => {
         try {
           setLoading(true)
           setError(null)
+
+          if (entryId) {
+            const cached = await getRecommendations(entryId)
+            if (cached) {
+              setRecommendations(cached)
+              return
+            }
+          }
+
           const result = await generateRecommendations(analysisData)
           setRecommendations(result)
+
+          if (entryId) {
+            await saveRecommendations(entryId, result)
+          }
         } catch (err) {
-          console.error("Error loading recommendations:", err)
+          if (__DEV__) console.error("Error loading recommendations:", err)
           setError("Failed to load recommendations. Please try again.")
         } finally {
           setLoading(false)
@@ -58,7 +69,7 @@ const RecommendationsScreen = ({ route }) => {
     }
 
     loadRecommendations()
-  }, [activeTab, recommendations, loading, analysisData])
+  }, [activeTab, recommendations, loading, analysisData, entryId])
 
   const renderAnalysisTab = () => (
     <View style={styles.tabContent}>

@@ -5,7 +5,7 @@
  * Run all: node scrape-multi.js
  * Run one: node scrape-multi.js sartorialnotes
  *
- * Reads env from ../.env — needs OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
+ * Reads env from ../.env — needs OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  *
  * Before first run, apply schema migration in Supabase SQL editor:
  *   ALTER TABLE articles ADD COLUMN IF NOT EXISTS source text;
@@ -19,14 +19,14 @@ import * as dotenv from "dotenv"
 
 dotenv.config({ path: "../.env" })
 
-const { OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
-if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("Missing env vars — check ../.env")
+const { OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env
+if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing env vars — check ../.env for OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY")
   process.exit(1)
 }
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY })
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 const CHUNK_WORDS = 400
 const EMBED_BATCH = 20

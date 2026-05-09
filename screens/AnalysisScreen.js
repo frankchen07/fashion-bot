@@ -1,7 +1,5 @@
-"use client"
-
 import { useEffect, useState } from "react"
-import { StyleSheet, View, Text, Image, ActivityIndicator } from "react-native"
+import { StyleSheet, View, Text, Image, ActivityIndicator, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { analyzeOutfit } from "../services/aiService"
 import { saveAnalysis } from "../services/storageService"
@@ -33,25 +31,32 @@ const AnalysisScreen = ({ route, navigation }) => {
         clearInterval(progressInterval)
         setProgress(100)
 
+        if (!analysisResult) {
+          throw new Error("Analysis returned empty result")
+        }
+
         // Save to history; get back the persistent image URI to hand off to next screen
         let finalImageUri = imageUri
+        let entryId = null
         try {
           const entry = await saveAnalysis(imageUri, analysisResult)
           finalImageUri = entry.imageUri
+          entryId = entry.id
         } catch (e) {
-          console.error("Failed to save to history:", e)
+          Alert.alert("Heads up", "Analysis complete but couldn't save to history.")
         }
 
         setTimeout(() => {
           navigation.replace("Recommendations", {
             imageUri: finalImageUri,
             analysis: analysisResult,
+            entryId,
           })
         }, 500)
       } catch (err) {
+        if (__DEV__) console.error("Analysis error:", err)
         setError("Failed to analyze the outfit. Please try again.")
         setLoading(false)
-        console.error("Analysis error:", err)
       }
     }
 

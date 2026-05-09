@@ -34,7 +34,7 @@ const PhotoPickerScreen = ({ navigation }) => {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 })
       setSelectedImage(photo.uri)
     } catch (e) {
-      console.error("Camera capture failed:", e)
+      alert("Camera capture failed. Please try again.")
     }
   }
 

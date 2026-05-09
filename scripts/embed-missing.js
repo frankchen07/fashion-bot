@@ -11,14 +11,14 @@ import * as dotenv from "dotenv"
 
 dotenv.config({ path: "../.env" })
 
-const { OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
-if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("Missing env vars — check ../.env")
+const { OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env
+if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing env vars — check ../.env for OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY")
   process.exit(1)
 }
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY })
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 const BATCH = 20
 
