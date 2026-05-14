@@ -100,7 +100,7 @@ ${sourceSections}
 
 Return a JSON object with exactly one key "sources" — an array where each object has:
 - "source": MUST be exactly one of these identifiers: ${allowedSources}
-- "styleAssessment": 2-3 sentences in that publication's voice
+- "styleAssessment": 2-3 sentences in that publication's voice. If the outfit has significant problems, lead with them — be candid and direct in the publication's voice. Do not be sycophantic.
 - "recommendations": array of 2-4 specific suggestion strings
 
 IMPORTANT: Only include sources from this list: ${allowedSources}. Do not invent or add any other source names. Do not include fashionTerms.`

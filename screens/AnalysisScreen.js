@@ -55,7 +55,12 @@ const AnalysisScreen = ({ route, navigation }) => {
         }, 500)
       } catch (err) {
         if (__DEV__) console.error("Analysis error:", err)
-        setError("Failed to analyze the outfit. Please try again.")
+        const isRateLimited = err?.message === "daily_limit_reached"
+        setError(
+          isRateLimited
+            ? "You've used all 5 analyses for today. Come back tomorrow."
+            : "Failed to analyze the outfit. Please try again."
+        )
         setLoading(false)
       }
     }

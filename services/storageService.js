@@ -3,6 +3,22 @@ import * as FileSystem from "expo-file-system/legacy"
 
 const HISTORY_KEY = "wardrobe_history"
 const RECOMMENDATIONS_KEY = "wardrobe_recommendations"
+const DEVICE_ID_KEY = "device_id"
+
+const generateUUID = () =>
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16)
+  })
+
+export const getOrCreateDeviceId = async () => {
+  let id = await AsyncStorage.getItem(DEVICE_ID_KEY)
+  if (!id) {
+    id = generateUUID()
+    await AsyncStorage.setItem(DEVICE_ID_KEY, id)
+  }
+  return id
+}
 const IMAGE_DIR = FileSystem.documentDirectory + "wardrobe/"
 
 const ensureDir = async () => {

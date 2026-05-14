@@ -79,6 +79,26 @@ Recommendations are cached in AsyncStorage after the first load — tapping the 
 
 ---
 
+## Behavior Notes
+
+**Caching & history**
+
+Analysis is saved to history immediately on success (`saveAnalysis` in `AnalysisScreen.js`). Recommendations are lazy — only fetched when you tap the Recommendations tab. First tap hits the API and caches the result in AsyncStorage. Every subsequent view of that entry (including from history) reads from cache, making zero API calls.
+
+**What analysis is based on**
+
+Purely vision. GPT-4o-mini sees the image and nothing else at this stage — no articles table involved. The Derek Guy-style prompt tells it what fields to return; the model fills them from what it literally sees in the photo.
+
+**What recommendations are based on**
+
+The articles knowledge base. The outfit description gets embedded, pgvector searches the 42k article chunks for the most relevant excerpts, and GPT writes recommendations grounded in those excerpts — in the voice of each matched publication.
+
+**Tone of recommendations (positive vs. critical)**
+
+The publications have distinct personalities baked into their prompts — Dappered and Real Men Real Style are practical and encouraging; Derek Guy and Gentleman's Gazette are more precise and unsparing. On a bad outfit you'll often get one source that says "here's how to fix it" and another that just says "this doesn't work." But which publications appear at all depends on which articles matched the RAG search — the split is emergent, not explicitly designed.
+
+---
+
 ## Where Data Lives
 
 | Data | Where |

@@ -13,7 +13,7 @@ npm-debug.*
 web-build/
 .env
 .readme.md
-*.sql
+/*.sql
 
 # macOS
 .DS_Store

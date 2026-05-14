@@ -1,12 +1,16 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from "jsr:@supabase/supabase-js@2"
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const API_TIMEOUT = 60_000
+const DAILY_LIMIT = parseInt(Deno.env.get("DAILY_LIMIT") ?? "5")
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-device-id",
 }
 
 const json = (body: unknown, status = 200) =>
@@ -44,12 +48,12 @@ Please provide:
     - Casual → Workwear, Americana, Japanese repro, rugged
     - Refinement → Understated, elegant, rakish, insouciant, refined, subtle
 
-2. An objective description of the overall style
+2. An objective description of the overall style — be direct and honest. If the outfit has problems (poor fit, clashing colors, wrong formality for context, bad proportions, low-quality garments, or incoherent styling), name them explicitly in styleDescription. Do not soften or omit negative observations. A well-dressed person needs accurate feedback, not flattery.
 3. Key fashion terminology relevant to the identified garments (terms a wearer should know)
 
 Format your response as a JSON object with these keys:
 - outfitItems: array of objects with {"garment type or name", "fit and silhouette", "condition and wear", "fabric and texture", "styling and influence"}
-- styleDescription: string with your factual description of the outfit
+- styleDescription: string with your honest, factual description — including any significant problems with the outfit
 - fashionTerms: array of objects with {term, definition}
 `
 
@@ -57,6 +61,18 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
 
   try {
+    const deviceId = req.headers.get("x-device-id")
+
+    if (deviceId && DAILY_LIMIT > 0) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      const { data: allowed, error: rpcErr } = await supabase.rpc("check_and_increment_usage", {
+        p_device_id: deviceId,
+        p_limit: DAILY_LIMIT,
+      })
+      if (rpcErr) console.error("Rate limit check failed:", rpcErr.message)
+      else if (!allowed) return json({ error: "daily_limit_reached" })
+    }
+
     const { base64Image } = await req.json()
     if (!base64Image) return json({ error: "base64Image required" }, 400)
 

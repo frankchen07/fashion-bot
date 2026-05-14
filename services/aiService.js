@@ -1,6 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy"
 import { createClient } from "@supabase/supabase-js"
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@env"
+import { getOrCreateDeviceId } from "./storageService"
 
 let _supabase = null
 const getSupabase = () => {
@@ -44,9 +45,13 @@ const imageToBase64 = async (imageUri) => {
 }
 
 export const analyzeOutfit = async (imageUri) => {
-  const base64Image = await imageToBase64(imageUri)
+  const [base64Image, deviceId] = await Promise.all([
+    imageToBase64(imageUri),
+    getOrCreateDeviceId(),
+  ])
   const { data, error } = await getSupabase().functions.invoke("analyze-outfit", {
     body: { base64Image },
+    headers: { "x-device-id": deviceId },
   })
   if (error) throw error
   if (data?.error) throw new Error(data.error)
