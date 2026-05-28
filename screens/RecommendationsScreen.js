@@ -90,6 +90,12 @@ const RecommendationsScreen = ({ route }) => {
           <View key={index} style={styles.itemCard}>
             <Text style={styles.itemName}>{name}</Text>
             <View style={styles.itemDetails}>
+              {item["color"] && (
+                <View style={styles.itemDetail}>
+                  <Text style={styles.itemDetailLabel}>Color:</Text>
+                  <Text style={styles.itemDetailValue}>{item["color"]}</Text>
+                </View>
+              )}
               <View style={styles.itemDetail}>
                 <Text style={styles.itemDetailLabel}>Fit:</Text>
                 <Text style={styles.itemDetailValue}>{item["fit and silhouette"]}</Text>

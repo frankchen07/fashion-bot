@@ -19,6 +19,7 @@ export const normalizeAnalysis = (raw) => ({
   fashionTerms: raw.fashionTerms || [],
   outfitItems: (raw.outfitItems || []).map((item) => ({
     "garment type or name":  pick(item, "garment type or name", "garmentTypeOrName", "garmentType", "garment_type_or_name", "name", "type"),
+    "color":                 pick(item, "color", "colour"),
     "fit and silhouette":    pick(item, "fit and silhouette",   "fitAndSilhouette",   "fit_and_silhouette",   "fit", "silhouette"),
     "condition and wear":    pick(item, "condition and wear",   "conditionAndWear",   "condition_and_wear",   "condition", "wear"),
     "fabric and texture":    pick(item, "fabric and texture",   "fabricAndTexture",   "fabric_and_texture",   "fabric", "texture", "material"),
