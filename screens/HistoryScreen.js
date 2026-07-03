@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useFocusEffect } from "@react-navigation/native"
 import { getHistory, deleteEntry } from "../services/storageService"
+import { normalizeAnalysis } from "../services/aiService"
 
 const HistoryScreen = ({ navigation }) => {
   const [history, setHistory] = useState([])
@@ -68,7 +69,7 @@ const HistoryScreen = ({ navigation }) => {
       <View style={styles.cardBody}>
         <Text style={styles.dateText}>{formatDate(item.timestamp)}</Text>
         <Text style={styles.descText} numberOfLines={2}>
-          {item.analysis?.styleDescription || "No description"}
+          {normalizeAnalysis(item.analysis || {}).styleDescription || "No description"}
         </Text>
       </View>
       <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)} hitSlop={8}>

@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     // Group chunks by source, rank by best similarity score
     const sourceMap: Record<string, { bestSimilarity: number; chunks: string[] }> = {}
     for (const row of filtered) {
-      const src = (row.source as string) || "unknown"
+      const src = (row.source as string) || "dieworkwear"
       if (!sourceMap[src]) sourceMap[src] = { bestSimilarity: 0, chunks: [] }
       if (row.similarity > sourceMap[src].bestSimilarity) sourceMap[src].bestSimilarity = row.similarity
       sourceMap[src].chunks.push(`[From "${row.title}"]\n${row.content}`)

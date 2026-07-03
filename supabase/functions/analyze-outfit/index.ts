@@ -32,11 +32,7 @@ Respond with a JSON object containing:
   - "condition and wear": pristine, broken-in, worn, or worn out
   - "styling and influence": the aesthetic tradition this piece draws from (Ivy, Neapolitan, workwear, Americana, smart casual, etc.)
 
-"styleDescription": your honest expert assessment. It must address all four of these:
-  1. Color story — do the colors work together? Tonal, complementary, clashing, or random?
-  2. Proportion and silhouette — does the overall shape work? Do the pieces balance each other?
-  3. Occasion and context — what is this outfit appropriate for? What would it be wrong for?
-  4. Verdict — your clearest, most direct take. What is the central success or failure of this outfit? Lead with the most important observation. Be direct — a well-dressed person needs accurate feedback, not flattery.
+"styleDescription": a single string of flowing prose — your honest expert assessment. In this string, cover: color story (do the colors work together — tonal, complementary, clashing, or random?), proportion and silhouette (does the overall shape work?), occasion and context (appropriate for what?), and your verdict (the central success or failure, direct and unsparing). Return this as one cohesive paragraph. Do NOT return a nested object or separate keys.
 
 "fashionTerms": array of {term, definition} — 3–6 key terms a wearer of this outfit should know
 `

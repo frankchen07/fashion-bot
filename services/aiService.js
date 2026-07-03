@@ -16,6 +16,9 @@ const pick = (obj, ...keys) => {
 
 export const normalizeAnalysis = (raw) => ({
   ...raw,
+  styleDescription: typeof raw.styleDescription === 'object' && raw.styleDescription !== null
+    ? Object.values(raw.styleDescription).join(' ')
+    : raw.styleDescription,
   fashionTerms: raw.fashionTerms || [],
   outfitItems: (raw.outfitItems || []).map((item) => ({
     "garment type or name":  pick(item, "garment type or name", "garmentTypeOrName", "garmentType", "garment_type_or_name", "name", "type"),

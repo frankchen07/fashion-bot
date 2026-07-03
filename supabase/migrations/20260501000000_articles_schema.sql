@@ -11,7 +11,7 @@ CREATE TABLE articles (
   UNIQUE (url, chunk_index)
 );
 
-CREATE INDEX ON articles USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX ON articles USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 CREATE OR REPLACE FUNCTION match_articles(query_embedding VECTOR(1536), match_count INT)
 RETURNS TABLE(id BIGINT, title TEXT, content TEXT, source TEXT, similarity FLOAT)
